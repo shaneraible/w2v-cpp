@@ -20,16 +20,17 @@ class w2v{
     private:
         static int vocabHashSize, numChars, tableSize;
         static long long maxVocabSize, vocabSize, layer1Size, fileSize;
+        static int negative;
         static std::string trainFile;
         static struct vocabWord *vocab;
-        int *uniTable;
+        static int *uniTable;
         static int *vocabHash;
         static int numThreads;
         static real alpha, startingAlpha, subsample;
         static unsigned int window;
         static int debugMode;
         
-        real *hiddenLayer, *outLayerSoft, *outLayerNeg, *expTable;
+        static real *hiddenLayer, *outLayerSoft, *outLayerNeg, *expTable;
         static int VocabCompare(const void *, const void *);
         void learnVocabFromTrainFile();
         void saveVocab(std::string);
@@ -42,6 +43,7 @@ class w2v{
         int getWordIndex(std::string word);  //index of word in vocab
         int addToVocab(std::string word);
         void initUnigramTable();
+        real* getVector();
 };
 
 
