@@ -12,10 +12,13 @@ int w2v::debugMode;
 int w2v::numThreads;
 w2v::real w2v::alpha, w2v::startingAlpha, w2v::subsample ;
 long long trainWords = 0, wordCountActual = 0, iter = 5, fileSize = 0, classes = 0;
-
+int w2v::vocabHashSize, w2v::numChars, w2v::tableSize;
+int* w2v::vocabHash;
+w2v::vocabWord* w2v::vocab;
+unsigned int window;
 w2v::w2v(){
     vocabHashSize=30E6;
-    numThreads = 3;
+    numThreads = 1;
     numChars=257;
     maxVocabSize=1000;
     vocabSize=0;
@@ -26,6 +29,7 @@ w2v::w2v(){
     alpha = .025;
     startingAlpha = 0;
     subsample = 1e-3;
+    window = 5;
     vocab = (struct vocabWord *)calloc(maxVocabSize, sizeof(struct vocabWord));
     vocabHash = (int *)calloc(vocabHashSize, sizeof(int));
 }
@@ -55,44 +59,75 @@ void w2v::trainModel(){
 void *w2v::trainModelThread(void *id){
     std::cout<<"IN THE THREAD FOH TODAY"<<(long long)id<<std::endl;
     unsigned long long next_random = (long long)id;
-    long long wordCount=0, lastWordCount =0; 
+    long long wordCount=0, lastWordCount =0, word,  sen[120 + 1]; 
     long long sentencePos = 0, sentenceLength = 0;
+    unsigned long long nextRandom = (long long)id;
+    char eof=0;
 
     clock_t now;
     real f, g;
     real *l1e = (real *)calloc(layer1Size, sizeof(real));
-    FILE *in = fopen(trainFile.c_str(), "rb");
-
-    fseek(in, fileSize/(long long)numThreads*(long long)id, SEEK_SET);
+    std::fstream in (trainFile);
     
     while(1){
         if (wordCount - lastWordCount > 10) {
-        wordCountActual += wordCount - lastWordCount;
-        
-        lastWordCount = wordCount;
-        
-        // The percentage complete is based on the total number of passes we are
-        // doing and not just the current pass.      
-        if ((debugMode > 1)) {
-            now=clock();
-            printf("%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ", 13, alpha,
-            // Percent complete = [# of input words processed] / 
-            //                      ([# of passes] * [# of words in a pass])
-            wordCountActual / (real)(iter * trainWords + 1) * 100,
-            wordCountActual / ((real)(now - start + 1) / (real)CLOCKS_PER_SEC * 1000));
-            fflush(stdout);
-        }
-
-
-            //TODO ADD OPTION FOR CBOW
-            if(1){
-
+            wordCountActual += wordCount - lastWordCount;
+            
+            lastWordCount = wordCount;
+            
+            // The percentage complete is based on the total number of passes we are
+            // doing and not just the current pass.      
+            if ((debugMode > 1)) {
+                now=clock();
+                printf("%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ", 13, alpha,
+                // Percent complete = [# of input words processed] / 
+                //                      ([# of passes] * [# of words in a pass])
+                wordCountActual / (real)(iter * trainWords + 1) * 100,
+                wordCountActual / ((real)(now - start + 1) / (real)CLOCKS_PER_SEC * 1000));
+                fflush(stdout);
             }
+            alpha = startingAlpha*(1-wordCountActual/(real)(iter*trainWords + 1));
+            if(alpha<startingAlpha*.0001) alpha = startingAlpha*.0001;
         }
+        if (sentenceLength==0){
+            std::string w;
+            while(in>>w){ 
+                word = searchVocab(w);
+                wordCount++;
+                if (word==-1) continue;
+                //if(word==0) break;
+                sen[sentenceLength++] = word;
+                std::cout<<word<<std::endl;
+                //std::cout<<vocab[word].word<<std::endl;
+                //TODO MAX SENTENCE LENGTH
+            }
+            if(subsample>0){
+                //TODO NEGATIVE SAMPLIGN
+            }
+            sentencePos = 0;
+        }
+
+        if(eof || (wordCount>trainWords/numThreads)){
+            //TODO WHATEVER THIS IS
+            
+        }
+
+        word=sen[sentencePos];
+        if(word == -1) continue;
+        for(int c=0; c<layer1Size; c++) l1e[c]=0;
+        nextRandom = nextRandom * (unsigned long long)25214903917 + 11;
+        long long b = nextRandom%window;
+
+        //TODO CBOW LATER
+        if(1){
+
+        }
+        break;
     }
-    fclose(in);
+
+    in.close();
     pthread_exit(NULL); //returns
-    }
+}
 
 //TODO RENAME TO CREATE VOCAB FROM FILE!!! THIS IS NOT READING THE VOCAB
 void w2v::learnVocabFromTrainFile(){

@@ -18,16 +18,15 @@ class w2v{
         void trainModel();
 
     private:
-        int vocabHashSize;
-        int tableSize;
-        int numChars;
+        static int vocabHashSize, numChars, tableSize;
         static long long maxVocabSize, vocabSize, layer1Size, fileSize;
         static std::string trainFile;
-        struct vocabWord *vocab;
+        static struct vocabWord *vocab;
         int *uniTable;
-        int *vocabHash;
+        static int *vocabHash;
         static int numThreads;
         static real alpha, startingAlpha, subsample;
+        static unsigned int window;
         static int debugMode;
         
         real *hiddenLayer, *outLayerSoft, *outLayerNeg, *expTable;
@@ -38,8 +37,8 @@ class w2v{
         void initNet();
         void createBinaryTree();
         void sortVocab();
-        int searchVocab(std::string word);
-        int getHash(std::string word);       //hash value for a word
+        static int searchVocab(std::string word);
+        static int getHash(std::string word);       //hash value for a word
         int getWordIndex(std::string word);  //index of word in vocab
         int addToVocab(std::string word);
         void initUnigramTable();

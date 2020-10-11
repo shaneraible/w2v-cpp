@@ -1,23 +1,23 @@
-the king is royal
-the queen is royal
-he is the king
-she is the queen
-the prince is royal
-he is the prince
-the princess is royal
-she is the princess
-the king wears a crown
-he wears a crown
-a royal wears a crown
-she wears a crown
-the princess wears a crown
-the queen wears a crown
-he wears a crown
-the prince wears a crown
-the crown is small 
-the castle is big
-the royal lives in the castle
-he lives in the castle
-she lives in the castle
-the mouse is small
-the elephant is big
+the king is royal </s>
+the queen is royal </s>
+he is the king </s>
+she is the queen </s>
+the prince is royal </s>
+he is the prince </s>
+the princess is royal </s>
+she is the princess </s>
+the king wears a crown </s>
+he wears a crown </s>
+a royal wears a crown </s>
+she wears a crown </s>
+the princess wears a crown </s>
+the queen wears a crown </s>
+he wears a crown </s>
+the prince wears a crown </s>
+the crown is small </s>
+the castle is big </s>
+the royal lives in the castle </s>
+he lives in the castle </s>
+she lives in the castle </s>
+the mouse is small </s>
+the elephant is big </s>
