@@ -16,6 +16,9 @@ class w2v{
     public:
         w2v();
         void trainModel();
+        std::string getMostSimilar(std::string);
+
+        double cosineSimilarity(long long, long long);
 
     private:
         static int vocabHashSize, numChars, tableSize;

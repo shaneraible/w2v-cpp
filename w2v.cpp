@@ -75,8 +75,34 @@ void w2v::trainModel(){
     std::cout<<"joining the threads..."<<std::endl;
     for (a = 0; a < numThreads; a++) pthread_join(pt[a], NULL);
 
-    //for(a=0; a<layer1Size; a++)std::cout<<hiddenLayer[a]<<std::endl;
+    // for(a=0; a<vocabSize; a++){
+    //     std::cout<<vocab[a].word<<vocab[a].count<<": ";
+    //     for(int k = 0; k<layer1Size; k++){
+    //         std::cout<<hiddenLayer[a*layer1Size+k]<<" ";
+    //     }
+    //     std::cout<<std::endl<<std::endl;
+    // }
     
+}
+
+std::string w2v::getMostSimilar(std::string word){
+    long long index = searchVocab(word);
+    if(index==-1) return NULL;
+    long long minWord=-1;
+    double minDistance=10000;
+
+    for(long long i=0; i<vocabSize; i++){
+        if(i==index) continue;
+
+        double dist = cosineSimilarity(index, i);
+        //std::cout<<word<<" similarity to: "<<vocab[i].word<<" = "<<dist<<std::endl;
+        if(dist<minDistance){
+            minWord=i;
+            minDistance=dist;
+        }
+    }
+
+    return vocab[minWord].word;
 }
 
 void *w2v::trainModelThread(void *id){
@@ -372,6 +398,15 @@ int w2v::getWordIndex(std::string word){
     return -1; 
 }  //index of word in vocab
 
+double w2v::cosineSimilarity(long long v1, long long v2){
+    double dot=0, d1=0, d2=0;
+    for(int i=0; i<layer1Size; i++){
+        dot+=hiddenLayer[v1*layer1Size+i]*hiddenLayer[v2*layer1Size+i];
+        d1 += hiddenLayer[v1*layer1Size+i]*hiddenLayer[v1*layer1Size+i];
+        d2 += hiddenLayer[v1*layer1Size+i]*hiddenLayer[v1*layer1Size+i];
+    }
+    return dot/(sqrt(d1)*sqrt(d2));
+}
 int w2v::searchVocab(std::string word){
     unsigned int h = getHash(word);
     
