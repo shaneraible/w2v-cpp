@@ -34,6 +34,7 @@ w2v::w2v(){
     maxVocabSize=1000;
     vocabSize=0;
     layer1Size=300;
+    debugMode=2;
     negative = 5;
 
     fileSize=0;
@@ -41,7 +42,7 @@ w2v::w2v(){
     trainFile="test.txt";
     alpha = .025;
     startingAlpha = 0;
-    subsample = 1e-3;
+    subsample = 0;
     window = 5;
     vocab = (struct vocabWord *)calloc(maxVocabSize, sizeof(struct vocabWord));
     vocabHash = (int *)calloc(vocabHashSize, sizeof(int));
@@ -74,7 +75,7 @@ void w2v::trainModel(){
     std::cout<<"joining the threads..."<<std::endl;
     for (a = 0; a < numThreads; a++) pthread_join(pt[a], NULL);
 
-    for(a=0; a<layer1Size; a++)std::cout<<hiddenLayer[a]<<std::endl;
+    //for(a=0; a<layer1Size; a++)std::cout<<hiddenLayer[a]<<std::endl;
     
 }
 
@@ -92,7 +93,7 @@ void *w2v::trainModelThread(void *id){
     std::fstream in (trainFile);
     
     while(1){
-        std::cout<<localIter<<std::endl;
+        //std::cout<<localIter<<std::endl;
         if (wordCount - lastWordCount > 10) {
             wordCountActual += wordCount - lastWordCount;
             
@@ -102,7 +103,7 @@ void *w2v::trainModelThread(void *id){
             // doing and not just the current pass.      
             if ((debugMode > 1)) {
                 now=clock();
-                printf("%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ", 13, alpha,
+                printf("\r%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  \r", 13, alpha,
                 // Percent complete = [# of input words processed] / 
                 //                      ([# of passes] * [# of words in a pass])
                 wordCountActual / (real)(iter * trainWords + 1) * 100,
@@ -116,17 +117,19 @@ void *w2v::trainModelThread(void *id){
             std::string w;
             while(in>>w){ 
                 word = searchVocab(w);
-                wordCount++;
+                //std::cout<<w<<"\t"<<word<<"\t"<<vocab[word].word<<std::endl;
                 if (word==-1) continue;
-                if(word==0) break;
+                wordCount++;
+                if (word==0) break;
 
                 if(subsample>0){
                     real ran = (sqrt(vocab[word].count / (subsample * trainWords)) + 1) * (subsample * trainWords) / vocab[word].count;
                     next_random = next_random * (unsigned long long)25214903917 + 11;
+                    //std::cout<<ran<<"\t"<<(next_random & 0xFFFF) / (real)65536<<std::endl;
                     if (ran < (next_random & 0xFFFF) / (real)65536) continue;
                 }
                 sen[sentenceLength++] = word;
-                std::cout<<vocab[word].word<<std::endl;
+                //std::cout<<vocab[word].word<<std::endl;
                 //TODO MAX SENTENCE LENGTH
             }
 
@@ -136,12 +139,16 @@ void *w2v::trainModelThread(void *id){
         if(in.get()==-1 || (wordCount>trainWords/numThreads)){
             wordCountActual +=wordCount-lastWordCount;
             localIter--;
-            std::cout<<localIter<<std::endl;
+            std::cout<<"Epoch: "<< iter-localIter<<std::endl;
+            //std::cout<<(in.get()==-1) << localIter<<std::endl;
+            //std::cout<<(wordCount>trainWords/numThreads)<< localIter<<std::endl;
             if(localIter==0) break;
             wordCount=0;
             lastWordCount=0;
             sentenceLength=0;
             //TODO FSEEK
+            in.clear();
+            in.seekg(0);
             continue; 
         }
 
@@ -207,7 +214,6 @@ void *w2v::trainModelThread(void *id){
             sentencePos=0;
             continue;
         }
-        break;
     }
 
     in.close();
@@ -293,11 +299,11 @@ void w2v::initNet(){
     unsigned long long nextRandom = 1;
 
     //allocating space for the hidden layer
-    std::cout<< (long long)vocabSize*layer1Size*sizeof(real) <<std::endl;
-    std::cout<< sizeof(void *) <<std::endl;
+    // std::cout<< (long long)vocabSize*layer1Size*sizeof(real) <<std::endl;
+    // std::cout<< sizeof(void *) <<std::endl;
     
     a = posix_memalign((void **)&hiddenLayer, 128, (long long)vocabSize*layer1Size*sizeof(real));
-    std::cout<< hiddenLayer <<std::endl;    
+    //std::cout<< hiddenLayer <<std::endl;    
     
     if(hiddenLayer==NULL) {std::cout<<"Memory allocation failed at hidden layer\n"; exit(1);}
     //TODO Hierarchal softmax for training
